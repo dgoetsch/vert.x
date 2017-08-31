@@ -68,16 +68,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -1486,7 +1477,45 @@ public class Http1xTest extends HttpTest {
     await();
   }
 
+  @Test
+  public void testServerWebsocketPingPong() {
+    Buffer pongMessage = Buffer.buffer(4);
+    server.close();
+    server = vertx.createHttpServer(new HttpServerOptions().setIdleTimeout(1).setPort(DEFAULT_HTTP_PORT).setHost(DEFAULT_HTTP_HOST));
+    server.websocketHandler(ws -> {
+      ws.pongHandler(pong -> {
+        pongMessage.setBuffer(0, pong);
+        ws.close();
+      });
+      ws.writePing(Buffer.buffer("ping"));
+    }).listen(ar -> {
+      client.websocket(DEFAULT_HTTP_PORT, DEFAULT_HTTP_HOST, "/", ws -> {});
+    });
 
+    Long start = System.currentTimeMillis();
+    while(System.currentTimeMillis() - start < 2000 && pongMessage.toString() != "ping") { }
+    assertEquals("ping", pongMessage.toString());
+  }
+
+  @Test
+  public void testClientWebsocketPingPong() {
+    Buffer pongMessage = Buffer.buffer(4);
+    server.close();
+    server = vertx.createHttpServer(new HttpServerOptions().setIdleTimeout(1).setPort(DEFAULT_HTTP_PORT).setHost(DEFAULT_HTTP_HOST));
+    server.websocketHandler(ws -> {}).listen(ar -> {
+      client.websocket(DEFAULT_HTTP_PORT, DEFAULT_HTTP_HOST, "/", ws -> {
+        ws.pongHandler(pong -> {
+          pongMessage.setBuffer(0, pong);
+          ws.close();
+        });
+        ws.writePing(Buffer.buffer("ping"));
+      });
+    });
+
+    Long start = System.currentTimeMillis();
+    while(System.currentTimeMillis() - start < 2000 && pongMessage.toString() != "ping") { }
+    assertEquals("ping", pongMessage.toString());
+  }
   @Test
   public void testClientWebsocketIdleTimeout() {
     client.close();

@@ -33,7 +33,6 @@ import io.vertx.core.spi.metrics.HttpClientMetrics;
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 class ClientHandler extends VertxHttpHandler<ClientConnection> {
-
   private boolean closeFrameSent;
   private ContextImpl context;
   private ChannelHandlerContext chctx;
@@ -107,14 +106,14 @@ class ClientHandler extends VertxHttpHandler<ClientConnection> {
         case BINARY:
         case CONTINUATION:
         case TEXT:
+        case PONG:
           conn.handleWsFrame(frame);
           break;
         case PING:
           // Echo back the content of the PING frame as PONG frame as specified in RFC 6455 Section 5.5.2
-          chctx.writeAndFlush(new WebSocketFrameImpl(FrameType.PONG, frame.getBinaryData()));
-          break;
-        case PONG:
-          // Just ignore it
+          WebSocketFrameImpl pong = new WebSocketFrameImpl(FrameType.PONG, frame.getBinaryData());
+          conn.reportBytesWritten(pong.binaryData().length());
+          conn.writeToChannel(pong);
           break;
         case CLOSE:
           if (!closeFrameSent) {

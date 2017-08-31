@@ -161,6 +161,16 @@ public abstract class WebSocketImplBase<S extends WebSocketBase> implements WebS
     }
   }
 
+  @Override
+  public S writePing(Buffer data) {
+    return writeFrame(WebSocketFrame.pingFrame(data, true));
+  }
+
+  @Override
+  public S writePong(Buffer data) {
+    return writeFrame(WebSocketFrame.pongFrame(data, true));
+  }
+
   private void writeMessageInternal(Buffer data) {
     checkClosed();
     writePartialMessage(FrameType.BINARY, data, 0);
@@ -241,11 +251,12 @@ public abstract class WebSocketImplBase<S extends WebSocketBase> implements WebS
   }
 
   private class FrameAggregator implements Handler<WebSocketFrameInternal> {
-
     private Handler<String> textMessageHandler;
     private Handler<Buffer> binaryMessageHandler;
+    private Handler<Buffer> pongHandler;
     private Buffer textMessageBuffer;
     private Buffer binaryMessageBuffer;
+    private Buffer pongBuffer;
 
     @Override
     public void handle(WebSocketFrameInternal frame) {
@@ -255,6 +266,9 @@ public abstract class WebSocketImplBase<S extends WebSocketBase> implements WebS
           break;
         case BINARY:
           handleBinaryFrame(frame);
+          break;
+        case PONG:
+          handlePongFrame(frame);
           break;
         case CONTINUATION:
           if (textMessageBuffer != null && textMessageBuffer.length() > 0) {
@@ -286,6 +300,31 @@ public abstract class WebSocketImplBase<S extends WebSocketBase> implements WebS
         textMessageBuffer = null;
         if (textMessageHandler != null) {
           textMessageHandler.handle(fullMessage);
+        }
+      }
+
+    }
+
+    private void handlePongFrame(WebSocketFrameInternal frame) {
+      Buffer frameBuffer = Buffer.buffer(frame.getBinaryData());
+      if (pongBuffer == null) {
+        pongBuffer = frameBuffer;
+      } else {
+        pongBuffer.appendBuffer(frameBuffer);
+      }
+      if (pongBuffer.length() > maxWebSocketMessageSize) {
+        int len = pongBuffer.length() - frameBuffer.length();
+        pongBuffer = null;
+        String msg = "Cannot process text frame of size " + frameBuffer.length() + ", it would cause message buffer (size " +
+          len + ") to overflow max message size of " + maxWebSocketMessageSize;
+        handleException(new IllegalStateException(msg));
+        return;
+      }
+      if (frame.isFinal()) {
+        Buffer fullMessage = pongBuffer.copy();
+        pongBuffer = null;
+        if (pongHandler!= null) {
+          pongHandler.handle(fullMessage);
         }
       }
 
@@ -346,6 +385,18 @@ public abstract class WebSocketImplBase<S extends WebSocketBase> implements WebS
       }
       ((FrameAggregator) frameHandler).binaryMessageHandler = handler;
       return (S) this;
+    }
+  }
+
+  @Override
+  public WebSocketBase pongHandler(Handler<Buffer> handler) {
+    synchronized (conn) {
+      checkClosed();
+      if (frameHandler == null || frameHandler.getClass() != FrameAggregator.class) {
+        frameHandler = new FrameAggregator();
+      }
+      ((FrameAggregator) frameHandler).pongHandler = handler;
+      return this;
     }
   }
 

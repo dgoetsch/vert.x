@@ -63,6 +63,28 @@ public interface WebSocketFrame {
   }
 
   /**
+   * Create a ping WebSocket frame.
+   *
+   * @param data the bytes for the frame
+   * @param isFinal  true if it's the final frame in the WebSocket message
+   * @return the frame
+   */
+  static WebSocketFrame pingFrame(Buffer data, boolean isFinal) {
+    return factory.pingFrame(data, isFinal);
+  }
+
+  /**
+   * Create a pong WebSocket frame.
+   *
+   * @param data the bytes for the frame
+   * @param isFinal  true if it's the final frame in the WebSocket message
+   * @return the frame
+   */
+  static WebSocketFrame pongFrame(Buffer data, boolean isFinal) {
+    return factory.pongFrame(data, isFinal);
+  }
+
+  /**
    * Create a continuation frame
    *
    * @param data  the data for the frame

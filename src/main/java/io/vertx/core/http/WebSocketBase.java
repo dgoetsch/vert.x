@@ -136,6 +136,31 @@ public interface WebSocketBase extends ReadStream<Buffer>, WriteStream<Buffer> {
   WebSocketBase writeTextMessage(String text);
 
   /**
+   * Writes a ping to the connection. This will be written in a single frame, so the contents of data should be small.
+   * This method should not be used to write application data and should only be used for implementing a keep alive or
+   * to ensure the client is still responsive, see RFC 6455 Section 5.5.2.
+   *
+   * @param data the data to write
+   * @return a reference to this, so the API can be used fluently
+   */
+  @Fluent
+  WebSocketBase writePing(Buffer data);
+
+  /**
+   * Writes a pong to the connection. This will be written in a single frame, so the contents of data should be small.
+   * This method should not be used to write application data and should only be used for implementing a keep alive or
+   * to ensure the client is still responsive, see RFC 6455 Section 5.5.2. RFC 6455 Secion 5.5.3 states that pongs may
+   * be sent unsolicited in order to implement a one way heartbeat.
+   *
+   * @param data the data to write
+   * @return a reference to this, so the API can be used fluently
+   */
+  @Fluent
+  WebSocketBase writePong(Buffer data);
+
+
+
+  /**
    * Set a close handler. This will be called when the WebSocket is closed.
    *
    * @param handler  the handler
@@ -173,6 +198,19 @@ public interface WebSocketBase extends ReadStream<Buffer>, WriteStream<Buffer> {
    */
   @Fluent
   WebSocketBase binaryMessageHandler(@Nullable Handler<Buffer> handler);
+
+  /**
+   * Set a pong message handler on the connection.  This handler will be invoked every time a pong message is received
+   * on the server, and can be used by both clients and servers since the RFC 6455 Sections 5.5.2 and 5.5.3 do not
+   * specify whether the client or server sends a ping.
+   *
+   * There is no ping handler since pings should immediately be responded to with a pong with identical content
+   *
+   * @param handler the handler
+   * @return a reference to this, so the API can be used fluently
+   */
+  @Fluent
+  WebSocketBase pongHandler(@Nullable Handler<Buffer> handler);
 
   /**
    * Calls {@link #close()}

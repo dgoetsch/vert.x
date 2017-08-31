@@ -42,4 +42,13 @@ public class WebSocketFrameFactoryImpl implements WebSocketFrameFactory {
     return new WebSocketFrameImpl(FrameType.CONTINUATION, data.getByteBuf(), isFinal);
   }
 
+  @Override
+  public WebSocketFrame pingFrame(Buffer data, boolean isFinal) {
+    return new WebSocketFrameImpl(FrameType.PING, data.getByteBuf(), isFinal);
+  }
+
+  @Override
+  public WebSocketFrame pongFrame(Buffer data, boolean isFinal) {
+    return new WebSocketFrameImpl(FrameType.PONG, data.getByteBuf(), isFinal);
+  }
 }

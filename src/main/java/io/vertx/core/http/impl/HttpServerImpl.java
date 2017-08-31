@@ -638,14 +638,14 @@ public class HttpServerImpl implements HttpServer, Closeable, MetricsProvider {
           case BINARY:
           case CONTINUATION:
           case TEXT:
+          case PONG:
             conn.handleMessage(msg);
             break;
           case PING:
             // Echo back the content of the PING frame as PONG frame as specified in RFC 6455 Section 5.5.2
-            ch.writeAndFlush(new WebSocketFrameImpl(FrameType.PONG, wsFrame.getBinaryData()));
-            break;
-          case PONG:
-            // Just ignore it
+            WebSocketFrameImpl pong = new WebSocketFrameImpl(FrameType.PONG, wsFrame.getBinaryData());
+            conn.reportBytesWritten(pong.binaryData().length());
+            conn.writeToChannel(pong);
             break;
           case CLOSE:
             if (!closeFrameSent) {
