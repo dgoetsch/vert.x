@@ -44,7 +44,7 @@ public class HttpServerOptions extends NetServerOptions {
    * Default value of whether compression is supported = false
    */
   public static final boolean DEFAULT_COMPRESSION_SUPPORTED = false;
-  
+
   /**
    * Default gzip/deflate compression level = 6 (Netty legacy)
    */
@@ -65,12 +65,12 @@ public class HttpServerOptions extends NetServerOptions {
    * Default max HTTP chunk size = 8192
    */
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8192;
-  
+
   /**
    * Default max length of the initial line (e.g. {@code "GET / HTTP/1.0"}) = 4096
    */
   public static final int DEFAULT_MAX_INITIAL_LINE_LENGTH = 4096;
-  
+
   /**
    * Default max length of all headers = 8192
    */
@@ -111,6 +111,12 @@ public class HttpServerOptions extends NetServerOptions {
    */
   public static final int DEFAULT_DECODER_INITIAL_BUFFER_SIZE = 128;
 
+  public static final boolean DEFAULT_ENABLE_WEB_SOCKET_KEEP_ALIVE = false;
+
+  public static final int DEFAULT_PING_INTERVAL_MILLI = 1000;
+
+  public static final int DEFAULT_PONG_TIMEOUT_MILLI = 2000;
+
   private boolean compressionSupported;
   private int compressionLevel;
   private int maxWebsocketFrameSize;
@@ -126,6 +132,10 @@ public class HttpServerOptions extends NetServerOptions {
   private boolean decompressionSupported;
   private boolean acceptUnmaskedFrames;
   private int decoderInitialBufferSize;
+
+  private boolean enableWebSocketKeepAlive;
+  private int webSocketPingIntervalMilli;
+  private int webSocketPongTimeoutMilli;
 
   /**
    * Default constructor
@@ -158,6 +168,9 @@ public class HttpServerOptions extends NetServerOptions {
     this.decompressionSupported = other.isDecompressionSupported();
     this.acceptUnmaskedFrames = other.isAcceptUnmaskedFrames();
     this.decoderInitialBufferSize = other.getDecoderInitialBufferSize();
+    this.enableWebSocketKeepAlive = other.isEnableWebSocketKeepAlive();
+    this.webSocketPingIntervalMilli = other.getWebSocketPingIntervalMilli();
+    this.webSocketPongTimeoutMilli = other.getWebSocketPongTimeoutMilli();
   }
 
   /**
@@ -198,6 +211,9 @@ public class HttpServerOptions extends NetServerOptions {
     decompressionSupported = DEFAULT_DECOMPRESSION_SUPPORTED;
     acceptUnmaskedFrames = DEFAULT_ACCEPT_UNMASKED_FRAMES;
     decoderInitialBufferSize = DEFAULT_DECODER_INITIAL_BUFFER_SIZE;
+    enableWebSocketKeepAlive = DEFAULT_ENABLE_WEB_SOCKET_KEEP_ALIVE;
+    webSocketPingIntervalMilli = DEFAULT_PING_INTERVAL_MILLI;
+    webSocketPongTimeoutMilli = DEFAULT_PONG_TIMEOUT_MILLI;
   }
 
   @Override
@@ -386,7 +402,7 @@ public class HttpServerOptions extends NetServerOptions {
   }
 
   /**
-   * Set whether the server should support gzip/deflate compression 
+   * Set whether the server should support gzip/deflate compression
    * (serving compressed responses to clients advertising support for them with Accept-Encoding header)
    *
    * @param compressionSupported true to enable compression support
@@ -398,38 +414,38 @@ public class HttpServerOptions extends NetServerOptions {
   }
 
   /**
-   * 
+   *
    * @return the server gzip/deflate 'compression level' to be used in responses when client and server support is turned on
    */
   public int getCompressionLevel() {
     return this.compressionLevel;
   }
-  
 
-  /** 
-   * This method allows to set the compression level to be used in http1.x/2 response bodies 
+
+  /**
+   * This method allows to set the compression level to be used in http1.x/2 response bodies
    * when compression support is turned on (@see setCompressionSupported) and the client advertises
    * to support {@code deflate/gzip} compression in the {@code Accept-Encoding} header
-   * 
+   *
    * default value is : 6 (Netty legacy)
-   * 
+   *
    * The compression level determines how much the data is compressed on a scale from 1 to 9,
    * where '9' is trying to achieve the maximum compression ratio while '1' instead is giving
-   * priority to speed instead of compression ratio using some algorithm optimizations and skipping 
+   * priority to speed instead of compression ratio using some algorithm optimizations and skipping
    * pedantic loops that usually gives just little improvements
-   * 
-   * While one can think that best value is always the maximum compression ratio, 
+   *
+   * While one can think that best value is always the maximum compression ratio,
    * there's a trade-off to consider: the most compressed level requires the most
    * computational work to compress/decompress data, e.g. more dictionary lookups and loops.
-   * 
-   * E.g. you have it set fairly high on a high-volume website, you may experience performance degradation 
+   *
+   * E.g. you have it set fairly high on a high-volume website, you may experience performance degradation
    * and latency on resource serving due to CPU overload, and, however - as the computational work is required also client side
    * while decompressing - setting an higher compression level can result in an overall higher page load time
    * especially nowadays when many clients are handled mobile devices with a low CPU profile.
-   * 
+   *
    * see also: http://www.gzip.org/algorithm.txt
-   * 
-   * @param compressionLevel integer 1-9, 1 means use fastest algorithm, 9 slower algorithm but better compression ratio 
+   *
+   * @param compressionLevel integer 1-9, 1 means use fastest algorithm, 9 slower algorithm but better compression ratio
    * @return a reference to this, so the API can be used fluently
    */
   public HttpServerOptions setCompressionLevel(int compressionLevel) {
@@ -543,7 +559,7 @@ public class HttpServerOptions extends NetServerOptions {
     return maxChunkSize;
   }
 
-  
+
   /**
    * @return the maximum length of the initial line for HTTP/1.x (e.g. {@code "GET / HTTP/1.0"})
    */
@@ -553,7 +569,7 @@ public class HttpServerOptions extends NetServerOptions {
 
   /**
    * Set the maximum length of the initial line for HTTP/1.x (e.g. {@code "GET / HTTP/1.0"})
-   * 
+   *
    * @param maxInitialLineLength the new maximum initial length
    * @return a reference to this, so the API can be used fluently
    */
@@ -680,7 +696,34 @@ public class HttpServerOptions extends NetServerOptions {
     this.decoderInitialBufferSize = decoderInitialBufferSize;
     return this;
   }
-  
+
+  public boolean isEnableWebSocketKeepAlive() {
+    return enableWebSocketKeepAlive;
+  }
+
+  public HttpServerOptions setEnableWebSocketKeepAlive(boolean enableWebSocketKeepAlive) {
+    this.enableWebSocketKeepAlive = enableWebSocketKeepAlive;
+    return this;
+  }
+
+  public int getWebSocketPingIntervalMilli() {
+    return webSocketPingIntervalMilli;
+  }
+
+  public HttpServerOptions setWebSocketPingIntervalMilli(int webSocketPingIntervalMilli) {
+    this.webSocketPingIntervalMilli = webSocketPingIntervalMilli;
+    return this;
+  }
+
+  public int getWebSocketPongTimeoutMilli() {
+    return webSocketPongTimeoutMilli;
+  }
+
+  public HttpServerOptions setWebSocketPongTimeoutMilli(int webSocketPongTimeoutMilli) {
+    this.webSocketPongTimeoutMilli = webSocketPongTimeoutMilli;
+    return this;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -702,28 +745,33 @@ public class HttpServerOptions extends NetServerOptions {
     if (decompressionSupported != that.decompressionSupported) return false;
     if (acceptUnmaskedFrames != that.acceptUnmaskedFrames) return false;
     if (decoderInitialBufferSize != that.decoderInitialBufferSize) return false;
-
+    if (enableWebSocketKeepAlive != that.enableWebSocketKeepAlive) return false;
+    if (webSocketPingIntervalMilli != that.webSocketPingIntervalMilli) return false;
+    if (webSocketPongTimeoutMilli != that.webSocketPongTimeoutMilli) return false;
     return !(websocketSubProtocols != null ? !websocketSubProtocols.equals(that.websocketSubProtocols) : that.websocketSubProtocols != null);
-
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (compressionSupported ? 1 : 0);
+    result = 31 * result + compressionLevel;
     result = 31 * result + maxWebsocketFrameSize;
     result = 31 * result + maxWebsocketMessageSize;
-    result = 31 * result + (websocketSubProtocols != null ? websocketSubProtocols.hashCode() : 0);
-    result = 31 * result + (initialSettings != null ? initialSettings.hashCode() : 0);
+    result = 31 * result + websocketSubProtocols.hashCode();
     result = 31 * result + (handle100ContinueAutomatically ? 1 : 0);
     result = 31 * result + maxChunkSize;
     result = 31 * result + maxInitialLineLength;
     result = 31 * result + maxHeaderSize;
-    result = 31 * result + (alpnVersions != null ? alpnVersions.hashCode() : 0);
+    result = 31 * result + initialSettings.hashCode();
+    result = 31 * result + alpnVersions.hashCode();
     result = 31 * result + http2ConnectionWindowSize;
     result = 31 * result + (decompressionSupported ? 1 : 0);
     result = 31 * result + (acceptUnmaskedFrames ? 1 : 0);
     result = 31 * result + decoderInitialBufferSize;
+    result = 31 * result + (enableWebSocketKeepAlive ? 1 : 0);
+    result = 31 * result + webSocketPingIntervalMilli;
+    result = 31 * result + webSocketPongTimeoutMilli;
     return result;
   }
 }

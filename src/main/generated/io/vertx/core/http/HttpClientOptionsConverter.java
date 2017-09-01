@@ -44,6 +44,9 @@ public class HttpClientOptionsConverter {
     if (json.getValue("defaultPort") instanceof Number) {
       obj.setDefaultPort(((Number)json.getValue("defaultPort")).intValue());
     }
+    if (json.getValue("enableWebSocketKeepAlive") instanceof Boolean) {
+      obj.setEnableWebSocketKeepAlive((Boolean)json.getValue("enableWebSocketKeepAlive"));
+    }
     if (json.getValue("forceSni") instanceof Boolean) {
       obj.setForceSni((Boolean)json.getValue("forceSni"));
     }
@@ -107,6 +110,12 @@ public class HttpClientOptionsConverter {
     if (json.getValue("verifyHost") instanceof Boolean) {
       obj.setVerifyHost((Boolean)json.getValue("verifyHost"));
     }
+    if (json.getValue("webSocketPingIntervalMilli") instanceof Number) {
+      obj.setWebSocketPingIntervalMilli(((Number)json.getValue("webSocketPingIntervalMilli")).intValue());
+    }
+    if (json.getValue("webSocketPongTimeoutMilli") instanceof Number) {
+      obj.setWebSocketPongTimeoutMilli(((Number)json.getValue("webSocketPongTimeoutMilli")).intValue());
+    }
   }
 
   public static void toJson(HttpClientOptions obj, JsonObject json) {
@@ -120,6 +129,7 @@ public class HttpClientOptionsConverter {
       json.put("defaultHost", obj.getDefaultHost());
     }
     json.put("defaultPort", obj.getDefaultPort());
+    json.put("enableWebSocketKeepAlive", obj.isEnableWebSocketKeepAlive());
     json.put("forceSni", obj.isForceSni());
     json.put("http2ClearTextUpgrade", obj.isHttp2ClearTextUpgrade());
     json.put("http2ConnectionWindowSize", obj.getHttp2ConnectionWindowSize());
@@ -145,5 +155,7 @@ public class HttpClientOptionsConverter {
     json.put("sendUnmaskedFrames", obj.isSendUnmaskedFrames());
     json.put("tryUseCompression", obj.isTryUseCompression());
     json.put("verifyHost", obj.isVerifyHost());
+    json.put("webSocketPingIntervalMilli", obj.getWebSocketPingIntervalMilli());
+    json.put("webSocketPongTimeoutMilli", obj.getWebSocketPongTimeoutMilli());
   }
 }

@@ -50,6 +50,9 @@ public class HttpServerOptionsConverter {
     if (json.getValue("decompressionSupported") instanceof Boolean) {
       obj.setDecompressionSupported((Boolean)json.getValue("decompressionSupported"));
     }
+    if (json.getValue("enableWebSocketKeepAlive") instanceof Boolean) {
+      obj.setEnableWebSocketKeepAlive((Boolean)json.getValue("enableWebSocketKeepAlive"));
+    }
     if (json.getValue("handle100ContinueAutomatically") instanceof Boolean) {
       obj.setHandle100ContinueAutomatically((Boolean)json.getValue("handle100ContinueAutomatically"));
     }
@@ -74,6 +77,12 @@ public class HttpServerOptionsConverter {
     if (json.getValue("maxWebsocketMessageSize") instanceof Number) {
       obj.setMaxWebsocketMessageSize(((Number)json.getValue("maxWebsocketMessageSize")).intValue());
     }
+    if (json.getValue("webSocketPingIntervalMilli") instanceof Number) {
+      obj.setWebSocketPingIntervalMilli(((Number)json.getValue("webSocketPingIntervalMilli")).intValue());
+    }
+    if (json.getValue("webSocketPongTimeoutMilli") instanceof Number) {
+      obj.setWebSocketPongTimeoutMilli(((Number)json.getValue("webSocketPongTimeoutMilli")).intValue());
+    }
     if (json.getValue("websocketSubProtocols") instanceof String) {
       obj.setWebsocketSubProtocols((String)json.getValue("websocketSubProtocols"));
     }
@@ -90,6 +99,7 @@ public class HttpServerOptionsConverter {
     json.put("compressionSupported", obj.isCompressionSupported());
     json.put("decoderInitialBufferSize", obj.getDecoderInitialBufferSize());
     json.put("decompressionSupported", obj.isDecompressionSupported());
+    json.put("enableWebSocketKeepAlive", obj.isEnableWebSocketKeepAlive());
     json.put("handle100ContinueAutomatically", obj.isHandle100ContinueAutomatically());
     json.put("http2ConnectionWindowSize", obj.getHttp2ConnectionWindowSize());
     if (obj.getInitialSettings() != null) {
@@ -100,6 +110,8 @@ public class HttpServerOptionsConverter {
     json.put("maxInitialLineLength", obj.getMaxInitialLineLength());
     json.put("maxWebsocketFrameSize", obj.getMaxWebsocketFrameSize());
     json.put("maxWebsocketMessageSize", obj.getMaxWebsocketMessageSize());
+    json.put("webSocketPingIntervalMilli", obj.getWebSocketPingIntervalMilli());
+    json.put("webSocketPongTimeoutMilli", obj.getWebSocketPongTimeoutMilli());
     if (obj.getWebsocketSubProtocols() != null) {
       json.put("websocketSubProtocols", obj.getWebsocketSubProtocols());
     }

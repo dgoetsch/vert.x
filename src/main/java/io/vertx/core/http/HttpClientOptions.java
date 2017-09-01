@@ -155,6 +155,12 @@ public class HttpClientOptions extends ClientOptionsBase {
    */
   public static final int DEFAULT_DECODER_INITIAL_BUFFER_SIZE = 128;
 
+  public static final boolean DEFAULT_ENABLE_WEB_SOCKET_KEEP_ALIVE = false;
+
+  public static final int DEFAULT_PING_INTERVAL_MILLI = 1000;
+
+  public static final int DEFAULT_PONG_TIMEOUT_MILLI = 2000;
+
   private boolean verifyHost = true;
   private int maxPoolSize;
   private boolean keepAlive;
@@ -181,6 +187,10 @@ public class HttpClientOptions extends ClientOptionsBase {
   private int maxRedirects;
   private boolean forceSni;
   private int decoderInitialBufferSize;
+
+  private boolean enableWebSocketKeepAlive;
+  private int webSocketPingIntervalMilli;
+  private int webSocketPongTimeoutMilli;
 
   /**
    * Default constructor
@@ -222,6 +232,9 @@ public class HttpClientOptions extends ClientOptionsBase {
     this.maxRedirects = other.maxRedirects;
     this.forceSni = other.forceSni;
     this.decoderInitialBufferSize = other.getDecoderInitialBufferSize();
+    this.enableWebSocketKeepAlive = other.isEnableWebSocketKeepAlive();
+    this.webSocketPingIntervalMilli = other.getWebSocketPingIntervalMilli();
+    this.webSocketPongTimeoutMilli = other.getWebSocketPongTimeoutMilli();
   }
 
   /**
@@ -272,6 +285,9 @@ public class HttpClientOptions extends ClientOptionsBase {
     maxRedirects = DEFAULT_MAX_REDIRECTS;
     forceSni = DEFAULT_FORCE_SNI;
     decoderInitialBufferSize = DEFAULT_DECODER_INITIAL_BUFFER_SIZE;
+    enableWebSocketKeepAlive = DEFAULT_ENABLE_WEB_SOCKET_KEEP_ALIVE;
+    webSocketPingIntervalMilli = DEFAULT_PING_INTERVAL_MILLI;
+    webSocketPongTimeoutMilli = DEFAULT_PONG_TIMEOUT_MILLI;
   }
 
   @Override
@@ -958,6 +974,33 @@ public class HttpClientOptions extends ClientOptionsBase {
     return this;
   }
 
+  public boolean isEnableWebSocketKeepAlive() {
+    return enableWebSocketKeepAlive;
+  }
+
+  public HttpClientOptions setEnableWebSocketKeepAlive(boolean enableWebSocketKeepAlive) {
+    this.enableWebSocketKeepAlive = enableWebSocketKeepAlive;
+    return this;
+  }
+
+  public int getWebSocketPingIntervalMilli() {
+    return webSocketPingIntervalMilli;
+  }
+
+  public HttpClientOptions setWebSocketPingIntervalMilli(int webSocketPingIntervalMilli) {
+    this.webSocketPingIntervalMilli = webSocketPingIntervalMilli;
+    return this;
+  }
+
+  public int getWebSocketPongTimeoutMilli() {
+    return webSocketPongTimeoutMilli;
+  }
+
+  public HttpClientOptions setWebSocketPongTimeoutMilli(int webSocketPongTimeoutMilli) {
+    this.webSocketPongTimeoutMilli = webSocketPongTimeoutMilli;
+    return this;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -966,29 +1009,35 @@ public class HttpClientOptions extends ClientOptionsBase {
 
     HttpClientOptions that = (HttpClientOptions) o;
 
-    if (defaultPort != that.defaultPort) return false;
-    if (keepAlive != that.keepAlive) return false;
+    if (verifyHost != that.verifyHost) return false;
     if (maxPoolSize != that.maxPoolSize) return false;
+    if (keepAlive != that.keepAlive) return false;
+    if (pipeliningLimit != that.pipeliningLimit) return false;
+    if (pipelining != that.pipelining) return false;
+    if (http2MaxPoolSize != that.http2MaxPoolSize) return false;
     if (http2MultiplexingLimit != that.http2MultiplexingLimit) return false;
+    if (http2ConnectionWindowSize != that.http2ConnectionWindowSize) return false;
+    if (tryUseCompression != that.tryUseCompression) return false;
     if (maxWebsocketFrameSize != that.maxWebsocketFrameSize) return false;
     if (maxWebsocketMessageSize != that.maxWebsocketMessageSize) return false;
-    if (pipelining != that.pipelining) return false;
-    if (pipeliningLimit != that.pipeliningLimit) return false;
-    if (tryUseCompression != that.tryUseCompression) return false;
-    if (verifyHost != that.verifyHost) return false;
-    if (!defaultHost.equals(that.defaultHost)) return false;
-    if (protocolVersion != that.protocolVersion) return false;
+    if (defaultPort != that.defaultPort) return false;
     if (maxChunkSize != that.maxChunkSize) return false;
+    if (maxInitialLineLength != that.maxInitialLineLength) return false;
+    if (maxHeaderSize != that.maxHeaderSize) return false;
     if (maxWaitQueueSize != that.maxWaitQueueSize) return false;
-    if (initialSettings == null ? that.initialSettings != null : !initialSettings.equals(that.initialSettings)) return false;
-    if (alpnVersions == null ? that.alpnVersions != null : !alpnVersions.equals(that.alpnVersions)) return false;
     if (http2ClearTextUpgrade != that.http2ClearTextUpgrade) return false;
-    if (http2ConnectionWindowSize != that.http2ConnectionWindowSize) return false;
     if (sendUnmaskedFrames != that.sendUnmaskedFrames) return false;
     if (maxRedirects != that.maxRedirects) return false;
+    if (forceSni != that.forceSni) return false;
     if (decoderInitialBufferSize != that.decoderInitialBufferSize) return false;
+    if (enableWebSocketKeepAlive != that.enableWebSocketKeepAlive) return false;
+    if (webSocketPingIntervalMilli != that.webSocketPingIntervalMilli) return false;
+    if (webSocketPongTimeoutMilli != that.webSocketPongTimeoutMilli) return false;
+    if (!defaultHost.equals(that.defaultHost)) return false;
+    if (protocolVersion != that.protocolVersion) return false;
+    if (!initialSettings.equals(that.initialSettings)) return false;
+    return alpnVersions.equals(that.alpnVersions);
 
-    return true;
   }
 
   @Override
@@ -996,10 +1045,12 @@ public class HttpClientOptions extends ClientOptionsBase {
     int result = super.hashCode();
     result = 31 * result + (verifyHost ? 1 : 0);
     result = 31 * result + maxPoolSize;
-    result = 31 * result + http2MultiplexingLimit;
     result = 31 * result + (keepAlive ? 1 : 0);
-    result = 31 * result + (pipelining ? 1 : 0);
     result = 31 * result + pipeliningLimit;
+    result = 31 * result + (pipelining ? 1 : 0);
+    result = 31 * result + http2MaxPoolSize;
+    result = 31 * result + http2MultiplexingLimit;
+    result = 31 * result + http2ConnectionWindowSize;
     result = 31 * result + (tryUseCompression ? 1 : 0);
     result = 31 * result + maxWebsocketFrameSize;
     result = 31 * result + maxWebsocketMessageSize;
@@ -1007,15 +1058,19 @@ public class HttpClientOptions extends ClientOptionsBase {
     result = 31 * result + defaultPort;
     result = 31 * result + protocolVersion.hashCode();
     result = 31 * result + maxChunkSize;
+    result = 31 * result + maxInitialLineLength;
+    result = 31 * result + maxHeaderSize;
     result = 31 * result + maxWaitQueueSize;
-    result = 31 * result + (initialSettings != null ? initialSettings.hashCode() : 0);
-    result = 31 * result + (alpnVersions != null ? alpnVersions.hashCode() : 0);
+    result = 31 * result + initialSettings.hashCode();
+    result = 31 * result + alpnVersions.hashCode();
     result = 31 * result + (http2ClearTextUpgrade ? 1 : 0);
-    result = 31 * result + http2ConnectionWindowSize;
     result = 31 * result + (sendUnmaskedFrames ? 1 : 0);
     result = 31 * result + maxRedirects;
+    result = 31 * result + (forceSni ? 1 : 0);
     result = 31 * result + decoderInitialBufferSize;
+    result = 31 * result + (enableWebSocketKeepAlive ? 1 : 0);
+    result = 31 * result + webSocketPingIntervalMilli;
+    result = 31 * result + webSocketPongTimeoutMilli;
     return result;
   }
-
 }

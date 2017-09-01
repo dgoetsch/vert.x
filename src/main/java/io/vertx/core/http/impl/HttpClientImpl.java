@@ -1016,8 +1016,9 @@ public class HttpClientImpl implements HttpClient, MetricsProvider {
 
     @Override
     public synchronized ReadStream<WebSocket> handler(Handler<WebSocket> handler) {
-      if (this.handler == null && handler != null) {
-        this.handler = handler;
+      Handler<WebSocket> modifiedHandler = applyKeepAlive(handler);
+      if (this.handler == null && modifiedHandler != null) {
+        this.handler = modifiedHandler;
         checkClosed();
         ContextImpl context = vertx.getOrCreateContext();
         Handler<Throwable> connectionExceptionHandler;
@@ -1030,11 +1031,11 @@ public class HttpClientImpl implements HttpClient, MetricsProvider {
         if (endHandler != null) {
           Handler<Void> endCallback = endHandler;
           wsConnect = ws -> {
-            handler.handle(ws);
+            modifiedHandler.handle(ws);
             endCallback.handle(null);
           };
         } else {
-          wsConnect = handler;
+          wsConnect = modifiedHandler;
         }
         getConnectionForWebsocket(ssl != null ? ssl : options.isSsl(), port, host, conn -> {
           conn.exceptionHandler(connectionExceptionHandler);
@@ -1062,6 +1063,14 @@ public class HttpClientImpl implements HttpClient, MetricsProvider {
     @Override
     public ReadStream<WebSocket> resume() {
       return this;
+    }
+  }
+
+  private Handler<WebSocket> applyKeepAlive(Handler<WebSocket> handler) {
+    if(!(handler instanceof WebSocketPingPongHandler) && options.isEnableWebSocketKeepAlive()) {
+      return new WebSocketPingPongHandler<WebSocket>(vertx, handler, options.getWebSocketPingIntervalMilli(), options.getWebSocketPongTimeoutMilli());
+    } else {
+      return handler;
     }
   }
 

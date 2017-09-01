@@ -169,9 +169,16 @@ public class HttpServerImpl implements HttpServer, Closeable, MetricsProvider {
     return requestStream;
   }
 
+  private Handler<ServerWebSocket> applyKeepAlive(Handler<ServerWebSocket> handler) {
+    if(!(handler instanceof WebSocketPingPongHandler) && options.isEnableWebSocketKeepAlive()) {
+      return new WebSocketPingPongHandler<ServerWebSocket>(vertx, handler, options.getWebSocketPingIntervalMilli(), options.getWebSocketPongTimeoutMilli());
+    } else {
+      return handler;
+    }
+  }
   @Override
   public HttpServer websocketHandler(Handler<ServerWebSocket> handler) {
-    websocketStream().handler(handler);
+    websocketStream().handler(applyKeepAlive(handler));
     return this;
   }
 
